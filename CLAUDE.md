@@ -4,7 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project: Brand Radar
 
-**Vision:** A commercial SaaS app that analyzes brands' social media presence and generates personalized marketing proposals with integrated advertising solutions.
+**Vision:** A commercial SaaS app for ITO Agency 360 that analyzes brands' social media presence and generates personalized marketing proposals for advertising in "Prohibido Tomar En Serio" (Stream Zero TV) + integrated agency services.
+
+**Client:** ITO Agency 360
+**Program:** Prohibido Tomar En Serio (Stream Zero TV)
 
 ## Architecture Overview
 
