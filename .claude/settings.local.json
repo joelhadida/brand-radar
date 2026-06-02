@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm start *)",
+      "Bash(rm -rf node_modules package-lock.json)",
+      "Bash(npm install *)",
+      "Bash(npm run dev > /tmp/frontend.log 2>&1 & *)",
+      "Bash(mkdir -p app components/ui lib && echo \"Directories created\")"
+    ],
+    "additionalDirectories": [
+      "/tmp",
+      "/private/tmp",
+      "/Users/jhadidab/Projects/workspace/frontend"
+    ]
+  }
+}
