@@ -1,5 +1,19 @@
 'use client'
 
+import { useState } from 'react'
+import ViabilityScore from './ViabilityScore'
+import NetworkMetrics from './NetworkMetrics'
+import PainPointsCard from './PainPointsCard'
+import ProposalView from './ProposalView'
+
+interface NetworkData {
+  handle: string
+  followers: number
+  engagement: number
+  active: boolean
+  postingFrequency?: string
+}
+
 interface AnalysisData {
   brand: string
   followers: number
@@ -7,8 +21,14 @@ interface AnalysisData {
   paidAds: boolean
   sponsorships: boolean
   painPoints: string[]
+  opportunities?: string[]
   isViable: boolean
+  viabilityScore?: number
   proposal?: string
+  networks?: {
+    [key: string]: NetworkData
+  }
+  niche?: string
 }
 
 interface AnalysisResultsProps {
@@ -16,80 +36,97 @@ interface AnalysisResultsProps {
 }
 
 export default function AnalysisResults({ data }: AnalysisResultsProps) {
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-md p-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-6">
-          Diagnóstico: {data.brand}
-        </h2>
+  const [proposalApproved, setProposalApproved] = useState(false)
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-600">Seguidores</p>
-            <p className="text-2xl font-bold text-blue-600">
-              {(data.followers / 1000).toFixed(1)}K
-            </p>
-          </div>
-          <div className="bg-green-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-600">Engagement</p>
-            <p className="text-2xl font-bold text-green-600">
-              {(data.engagement * 100).toFixed(1)}%
-            </p>
-          </div>
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-600">Publicidad Pagada</p>
-            <p className="text-2xl font-bold text-purple-600">
-              {data.paidAds ? 'Sí' : 'No'}
-            </p>
-          </div>
-          <div className="bg-orange-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-600">Patrocinios</p>
-            <p className="text-2xl font-bold text-orange-600">
-              {data.sponsorships ? 'Sí' : 'No'}
-            </p>
-          </div>
-        </div>
+  if (!data.isViable) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-red-50 rounded-lg shadow-md p-8 border-2 border-red-500">
+          <h2 className="text-3xl font-bold text-red-600 mb-4">
+            Diagnóstico: {data.brand}
+          </h2>
+          <p className="text-gray-700 mb-6">
+            Lamentablemente, esta marca no es viable en este momento para nuestra propuesta.
+          </p>
 
-        <div className="mb-6">
-          <h3 className="text-xl font-semibold text-gray-900 mb-3">
-            Principales Problemas Identificados
-          </h3>
-          <ul className="space-y-2">
-            {data.painPoints.map((point, idx) => (
-              <li key={idx} className="flex items-start gap-3">
-                <span className="text-red-500 font-bold">•</span>
-                <span className="text-gray-700">{point}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+          {data.niche && (
+            <p className="text-sm text-gray-600 mb-4">
+              <strong>Industria:</strong> {data.niche}
+            </p>
+          )}
 
-        <div
-          className={`p-4 rounded-lg ${
-            data.isViable
-              ? 'bg-green-100 border-2 border-green-500'
-              : 'bg-red-100 border-2 border-red-500'
-          }`}
-        >
-          <p className="font-semibold text-lg">
-            {data.isViable
-              ? '✓ Viable para nuestra propuesta'
-              : '✗ No viable en este momento'}
+          {data.networks && (
+            <NetworkMetrics networks={data.networks} />
+          )}
+
+          <p className="mt-6 text-sm text-gray-600 italic">
+            Te recomendamos analizar otra marca o volver en 3-6 meses cuando haya evolucionado su presencia digital.
           </p>
         </div>
       </div>
+    )
+  }
 
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-md p-8">
+        <h2 className="text-4xl font-bold text-gray-900 mb-2">
+          Diagnóstico: {data.brand}
+        </h2>
+        {data.niche && (
+          <p className="text-gray-600">
+            <strong>Industria:</strong> {data.niche}
+          </p>
+        )}
+      </div>
+
+      {/* Viability Score */}
+      {data.viabilityScore !== undefined && (
+        <ViabilityScore
+          score={data.viabilityScore}
+          isViable={data.isViable}
+        />
+      )}
+
+      {/* Network Metrics */}
+      {data.networks && <NetworkMetrics networks={data.networks} />}
+
+      {/* Pain Points & Opportunities */}
+      {data.painPoints && data.opportunities && (
+        <PainPointsCard
+          painPoints={data.painPoints}
+          opportunities={data.opportunities}
+        />
+      )}
+
+      {/* Proposal */}
       {data.isViable && data.proposal && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-md p-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">
-            Propuesta Personalizada
-          </h2>
-          <div className="prose prose-sm max-w-none text-gray-700">
-            {data.proposal}
+        <ProposalView
+          brandName={data.brand}
+          proposal={data.proposal}
+          onApprove={() => setProposalApproved(true)}
+          onReject={() => console.log('Propuesta rechazada')}
+        />
+      )}
+
+      {/* Approved state - shows next step */}
+      {proposalApproved && (
+        <div className="bg-green-50 rounded-lg shadow-md p-8 border-2 border-green-500">
+          <h3 className="text-2xl font-bold text-green-600 mb-4">
+            ¿Siguiente paso?
+          </h3>
+          <p className="text-gray-700 mb-4">
+            La propuesta está lista. Puedes:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button className="p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+              📄 Generar PDF
+            </button>
+            <button className="p-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold">
+              📧 Enviar por Email
+            </button>
           </div>
-          <button className="mt-6 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
-            Descargar Propuesta
-          </button>
         </div>
       )}
     </div>
