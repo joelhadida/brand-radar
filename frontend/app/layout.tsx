@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import Navigation from '@/components/Navigation'
 
 export const metadata: Metadata = {
   title: 'Brand Radar',
@@ -14,6 +15,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="antialiased">
+        <Navigation />
         {children}
       </body>
     </html>
