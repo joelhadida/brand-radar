@@ -33,7 +33,7 @@ const networkNames: { [key: string]: string } = {
 }
 
 export default function NetworkMetrics({ networks }: NetworkMetricsProps) {
-  const activeNetworks = Object.entries(networks).filter(([_, net]) => net.active)
+  const activeNetworks = Object.entries(networks).filter(([key, net]) => net.active)
 
   return (
     <div className="bg-white rounded-lg shadow-md p-8">
