@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { analyzeBrandRoute } from './routes/analyze.js'
+import { generateProposalRoute } from './routes/proposal.js'
 
 dotenv.config()
 
@@ -13,6 +14,7 @@ app.use(express.json())
 
 // Routes
 app.post('/api/analyze-brand', analyzeBrandRoute)
+app.post('/api/generate-proposal', generateProposalRoute)
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' })

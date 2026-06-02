@@ -1,48 +1,80 @@
 import { Request, Response } from 'express'
 import { AnalysisRequest, AnalysisResponse } from '../types/index.js'
+import {
+  extractBrandData,
+  analyzeBrandViability,
+  generateProposal,
+} from '../services/claudeService.js'
 
 export async function analyzeBrandRoute(req: Request, res: Response) {
   try {
     const { brandName } = req.body as AnalysisRequest
 
-    if (!brandName) {
+    if (!brandName || brandName.trim().length === 0) {
       return res.status(400).json({ error: 'Brand name is required' })
     }
 
-    // TODO: Integrate Claude API for real analysis
-    // For now, returning mock data
-    const mockAnalysis: AnalysisResponse = {
-      brand: brandName,
-      followers: 125000,
-      engagement: 0.032,
-      paidAds: true,
-      sponsorships: true,
-      painPoints: [
-        'Bajo engagement en publicaciones orgánicas',
-        'No aprovecha potencial de TikTok y Reels',
-        'Contenido poco estratégico y desorganizado',
-        'Falta de embudo de conversión claro',
-      ],
-      isViable: true,
-      proposal: `## Propuesta Personalizada para ${brandName}
+    // Extract brand data from Claude
+    console.log(`Extracting data for brand: ${brandName}`)
+    const brandData = await extractBrandData(brandName)
 
-### Diagnóstico
-Hemos identificado que tu marca tiene un potencial importante pero no está maximizando sus canales digitales.
+    // Analyze viability
+    const programName = process.env.PROGRAM_NAME || 'StreamProgram'
+    const agencyName = process.env.AGENCY_NAME || 'AgencyName'
 
-### Soluciones Recomendadas
-1. **Estrategia de Contenido Integrado** - Alineamos tus mensajes en todas las plataformas
-2. **Pauta Publicitaria Estratégica** - Direccionamos presupuesto a audiencias de alto valor
-3. **Embudo de Conversión** - Generamos leads cualificados para tu negocio
+    const viabilityAnalysis = await analyzeBrandViability(
+      brandData,
+      programName,
+      agencyName
+    )
 
-### Resultados Esperados
-- Incremento de 45% en engagement
-- 3x en generación de leads
-- Reducción de 30% en CAC (Costo de Adquisición de Cliente)`,
+    // Generate proposal if viable
+    let proposal: string | undefined
+    if (viabilityAnalysis.isViable) {
+      proposal = await generateProposal(
+        brandData,
+        viabilityAnalysis,
+        programName,
+        agencyName
+      )
     }
 
-    res.json(mockAnalysis)
+    // Calculate total followers and engagement
+    const totalFollowers = Object.values(brandData.networks).reduce(
+      (sum, net) => sum + (net.active ? net.followers : 0),
+      0
+    )
+
+    const activeNetworks = Object.values(brandData.networks).filter(
+      (n) => n.active
+    )
+    const avgEngagement =
+      activeNetworks.length > 0
+        ? activeNetworks.reduce((sum, n) => sum + n.engagement, 0) /
+          activeNetworks.length
+        : 0
+
+    const response: AnalysisResponse = {
+      brand: brandData.brand,
+      followers: totalFollowers,
+      engagement: avgEngagement,
+      paidAds: brandData.paidAds,
+      sponsorships: brandData.sponsorships,
+      painPoints: viabilityAnalysis.painPoints,
+      isViable: viabilityAnalysis.isViable,
+      proposal,
+      viabilityScore: viabilityAnalysis.viabilityScore,
+      networks: brandData.networks,
+      niche: brandData.niche,
+      opportunities: viabilityAnalysis.opportunities,
+    }
+
+    res.json(response)
   } catch (error) {
     console.error('Error analyzing brand:', error)
-    res.status(500).json({ error: 'Internal server error' })
+    res.status(500).json({
+      error:
+        error instanceof Error ? error.message : 'Internal server error',
+    })
   }
 }
