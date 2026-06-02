@@ -18,6 +18,8 @@ export interface BrandStats {
 }
 
 export interface AnalysisResponse {
+  id?: string
+  proposalId?: string
   brand: string
   followers: number
   engagement: number

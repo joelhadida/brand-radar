@@ -5,6 +5,11 @@ import {
   analyzeBrandViability,
   generateProposal,
 } from '../services/claudeService.js'
+import {
+  createOrGetBrand,
+  saveAnalysis,
+  saveProposal,
+} from '../services/dbService.js'
 
 export async function analyzeBrandRoute(req: Request, res: Response) {
   try {
@@ -54,7 +59,34 @@ export async function analyzeBrandRoute(req: Request, res: Response) {
           activeNetworks.length
         : 0
 
+    // Save to database
+    let analysisId: string | null = null
+    let proposalId: string | null = null
+
+    try {
+      const brandId = await createOrGetBrand(brandData.brand, {
+        website: brandData.website,
+        niche: brandData.niche,
+      })
+
+      analysisId = await saveAnalysis(brandId, {
+        raw_data: brandData,
+        viability_score: viabilityAnalysis.viabilityScore,
+        is_viable: viabilityAnalysis.isViable,
+        pain_points: viabilityAnalysis.painPoints,
+        opportunities: viabilityAnalysis.opportunities,
+      })
+
+      // Save proposal if viable
+      if (viabilityAnalysis.isViable && proposal) {
+        proposalId = await saveProposal(analysisId, proposal)
+      }
+    } catch (dbError) {
+      console.warn('Database save failed, but returning analysis:', dbError)
+    }
+
     const response: AnalysisResponse = {
+      id: analysisId,
       brand: brandData.brand,
       followers: totalFollowers,
       engagement: avgEngagement,
@@ -63,6 +95,7 @@ export async function analyzeBrandRoute(req: Request, res: Response) {
       painPoints: viabilityAnalysis.painPoints,
       isViable: viabilityAnalysis.isViable,
       proposal,
+      proposalId,
       viabilityScore: viabilityAnalysis.viabilityScore,
       networks: brandData.networks,
       niche: brandData.niche,
